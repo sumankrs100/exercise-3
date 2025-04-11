@@ -1,0 +1,24 @@
+http:
+  routers:
+    # Frontend router
+    frontend:
+      rule: "PathPrefix(`/`)"  # Route all frontend paths
+      service: frontend
+      priority: 10  # Lower priority to make it the default route
+
+    # Backend router
+    backend-api:
+      rule: "PathPrefix(`/api`)"  # Route all API paths
+      service: backend
+      priority: 100  # Higher priority to catch API requests first
+
+  services:
+    frontend:
+      loadBalancer:
+        servers:
+          - url: "http://FRONTEND_VM_IP:FRONTEND_PORT"  # Replace with actual frontend VM IP and port
+
+    backend:
+      loadBalancer:
+        servers:
+          - url: "http://BACKEND_VM_IP:BACKEND_PORT"  # Replace with actual backend VM IP and port
