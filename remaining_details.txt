@@ -1,0 +1,24 @@
+5. Running the Worker
+You'll need to start a Celery worker to process the jobs:
+celery -A app.main.app worker --loglevel=info
+
+6. Submitting Jobs
+You can now submit batch jobs from anywhere in your application:
+pythonfrom app.batch_processor import run_batch_job
+
+def submit_batch_job(config, input_data):
+    result = run_batch_job.delay(config, input_data)
+    return result.id  # Return the Celery task ID
+
+7. Monitoring and Retrieving Results
+To check job status and get results:
+pythonfrom app.celery_config import app
+
+def check_job_status(task_id):
+    result = app.AsyncResult(task_id)
+    return {
+        'status': result.status,
+        'result': result.result if result.ready() else None
+    }
+This integration preserves your class-based structure while running the batch jobs through Celery. The Prefect flows and tasks still function as before, with their logs being captured and associated with the Celery task IDs.
+Would you like me to elaborate on a specific part of this integration? Or do you have any other requirements for your batch processing system?
