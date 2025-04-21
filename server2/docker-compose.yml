@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  celery_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: celery -A server2.tasks worker --loglevel=info
+    environment:
+      # No need to specify REDIS_HOST since we're using localhost in the code,
+      # and Redis is already running on this server
+      - REDIS_PORT=6379
+    volumes:
+      - ./server2:/app/server2
+    network_mode: "host"  # This allows the container to access Redis on localhost:6379
+    restart: unless-stopped

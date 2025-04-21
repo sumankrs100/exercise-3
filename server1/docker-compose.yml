@@ -1,0 +1,26 @@
+version: '3'
+
+services:
+  celery_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: celery -A server1.tasks worker --loglevel=info
+    environment:
+      - REDIS_HOST=server2_ip_address
+      - REDIS_PORT=6379
+    volumes:
+      - ./server1:/app/server1
+    restart: unless-stopped
+
+  celery_beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: celery -A server1.tasks beat --loglevel=info
+    environment:
+      - REDIS_HOST=server2_ip_address
+      - REDIS_PORT=6379
+    volumes:
+      - ./server1:/app/server1
+    restart: unless-stopped
