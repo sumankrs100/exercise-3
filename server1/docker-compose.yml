@@ -5,9 +5,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: celery -A server1.tasks worker --loglevel=info
+    command: celery -A server1.tasks worker -Q server1_queue,server2_queue --loglevel=info
     environment:
-      - REDIS_HOST=server2_ip_address
+      - REDIS_HOST=server2_ip_address  # Replace with actual IP of server 2
       - REDIS_PORT=6379
     volumes:
       - ./server1:/app/server1
@@ -19,7 +19,7 @@ services:
       dockerfile: Dockerfile
     command: celery -A server1.tasks beat --loglevel=info
     environment:
-      - REDIS_HOST=server2_ip_address
+      - REDIS_HOST=server2_ip_address  # Replace with actual IP of server 2
       - REDIS_PORT=6379
     volumes:
       - ./server1:/app/server1
