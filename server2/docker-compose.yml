@@ -5,10 +5,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: celery -A server2.tasks worker --loglevel=info
+    command: celery -A server2.tasks worker -Q server1_queue,server2_queue --loglevel=info
     environment:
-      # No need to specify REDIS_HOST since we're using localhost in the code,
-      # and Redis is already running on this server
+      # No need to specify REDIS_HOST since we're using localhost in the code
       - REDIS_PORT=6379
     volumes:
       - ./server2:/app/server2
