@@ -1,7 +1,6 @@
 import os
 import time
 import random
-from celery import chain, signature
 from celery import Celery
 
 # Get environment variables
@@ -13,24 +12,20 @@ app = Celery('batch_job',
              broker=f'redis://{REDIS_HOST}:{REDIS_PORT}/0',
              backend=f'redis://{REDIS_HOST}:{REDIS_PORT}/0')
 
-# Import task signatures from workers
-# Note: We don't import the actual functions, just use their names as strings
-task1 = signature('worker1.process_data')
-task2 = signature('worker2.final_process')
-
 def run_task_chain():
     """
-    Function to run celery tasks in chain
+    Function to run celery tasks in chain using the pipe (|) operator
     """
     # Generate a random number as input to the first task
     input_value = random.randint(1, 100)
     print(f"Batch job starting with input value: {input_value}")
     
-    # Create and execute the task chain
-    result = chain(
-        task1.s(input_value),  # pass input_value to task1
-        task2.s()  # task2 will receive the result of task1
-    ).apply_async()
+    # Create task signatures
+    task1 = app.signature('worker1.process_data')
+    task2 = app.signature('worker2.final_process')
+    
+    # Create and execute the task chain using pipe (|) operator
+    result = (task1.s(input_value) | task2.s()).apply_async()
     
     # Wait for the chain to complete and get the final result
     final_result = result.get(timeout=30)  # 30 seconds timeout
