@@ -1,0 +1,53 @@
+version: '3'
+
+services:
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    networks:
+      - celery-network
+
+  worker1:
+    build:
+      context: ./worker1
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CELERY_QUEUE=task1_queue
+    networks:
+      - celery-network
+    command: celery -A tasks worker --loglevel=info -Q task1_queue
+
+  worker2:
+    build:
+      context: ./worker2
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CELERY_QUEUE=task2_queue
+    networks:
+      - celery-network
+    command: celery -A tasks worker --loglevel=info -Q task2_queue
+
+  batch_job:
+    build:
+      context: ./batch_job
+    depends_on:
+      - redis
+      - worker1
+      - worker2
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    networks:
+      - celery-network
+    command: python batch_job.py
+
+networks:
+  celery-network:
+    driver: bridge
