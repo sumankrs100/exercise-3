@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  # Redis Stack - includes Redis + RedisInsight + other Redis modules
+  redis:
+    image: redis/redis-stack:latest
+    ports:
+      - "6379:6379"  # Redis server
+      - "8001:8001"  # RedisInsight UI
+    volumes:
+      - redis-data:/data
+    environment:
+      - REDIS_ARGS=--save 60 1000 --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Celery worker - this will run your tasks
+  celery-worker:
+    image: python:3.10-slim
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./app:/app
+    working_dir: /app
+    command: >
+      bash -c "pip install celery redis &&
+              celery -A tasks worker --loglevel=info"
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+
+  # Celery beat - optional, for scheduled tasks
+  celery-beat:
+    image: python:3.10-slim
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./app:/app
+    working_dir: /app
+    command: >
+      bash -c "pip install celery redis &&
+              celery -A tasks beat --loglevel=info"
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+
+  # Celery Insights UI
+  celery-insights:
+    image: ghcr.io/kaishinaw/celery-insights:latest
+    ports:
+      - "8888:8888"
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      - BROKER_URL=redis://redis:6379/0
+      - RESULT_BACKEND=redis://redis:6379/0
+
+volumes:
+  redis-data:
